@@ -37,11 +37,12 @@ class ScannerView extends StatelessWidget {
   Widget build(BuildContext context) {
     Responsive.init(context);
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final width = MediaQuery.sizeOf(context).width;
-    final background = const Color(0xFF070B12);
-    final textPrimary = const Color(0xFFE9EEF8);
-    final textSecondary = const Color(0xFFB6C1CD);
-    final accent = const Color(0xFF00E5F2);
+    final background = theme.scaffoldBackgroundColor;
+    final textPrimary = colorScheme.onSurface;
+    final textSecondary = colorScheme.onSurfaceVariant;
+    final accent = colorScheme.primary;
 
     return Scaffold(
       backgroundColor: background,
@@ -73,7 +74,12 @@ class ScannerView extends StatelessWidget {
                                   child: Column(
                                     children: [
                                       SizedBox(height: Responsive.height(3)),
-                                      _StatusPill(label: content.status, accent: accent),
+                                      _StatusPill(
+                                        label: content.status,
+                                        accent: accent,
+                                        backgroundColor: colorScheme.surfaceContainerHighest,
+                                        textColor: colorScheme.onSurface,
+                                      ),
                                       SizedBox(height: Responsive.height(2.2)),
                                       Text(
                                         content.title,
@@ -171,7 +177,7 @@ class ScannerView extends StatelessWidget {
                                     ),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: accent,
-                                      foregroundColor: const Color(0xFF00151B),
+                                      foregroundColor: colorScheme.onPrimary,
                                       minimumSize: Size.fromHeight(Responsive.height(9)),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(Responsive.radius(16)),
@@ -225,17 +231,24 @@ class _CameraError extends StatelessWidget {
 }
 
 class _StatusPill extends StatelessWidget {
-  const _StatusPill({required this.label, required this.accent});
+  const _StatusPill({
+    required this.label,
+    required this.accent,
+    required this.backgroundColor,
+    required this.textColor,
+  });
 
   final String label;
   final Color accent;
+  final Color backgroundColor;
+  final Color textColor;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: Responsive.width(3), vertical: Responsive.height(1)),
       decoration: BoxDecoration(
-        color: const Color(0xFF202A36),
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Row(
@@ -243,7 +256,15 @@ class _StatusPill extends StatelessWidget {
         children: [
           Container(width: 14, height: 14, decoration: BoxDecoration(color: accent, shape: BoxShape.circle)),
           SizedBox(width: Responsive.width(1.5)),
-          Text(label, style: TextStyle(color: const Color(0xFFEAF8FF), fontSize: Responsive.font(16), fontWeight: FontWeight.w700, letterSpacing: 1.2)),
+          Text(
+            label,
+            style: TextStyle(
+              color: textColor,
+              fontSize: Responsive.font(16),
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.2,
+            ),
+          ),
         ],
       ),
     );

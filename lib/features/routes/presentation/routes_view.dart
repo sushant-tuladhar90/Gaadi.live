@@ -123,7 +123,7 @@ class _RoutesViewState extends State<RoutesView> {
                           foregroundColor: colorScheme.onPrimary,
                           minimumSize: Size.fromHeight(Responsive.height(9)),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(17),
+                            borderRadius: BorderRadius.circular(18),
                           ),
                         ),
                       ),

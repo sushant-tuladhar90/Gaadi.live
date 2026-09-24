@@ -26,6 +26,10 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Gaadi Live uses the camera to scan vehicle tracker QR codes.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Gaadi Live needs your location to send live trip data and device status.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Gaadi Live needs your location to send live trip data and device status.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>

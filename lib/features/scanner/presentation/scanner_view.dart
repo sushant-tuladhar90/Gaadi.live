@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:gaadi_live/features/routes/presentation/routes_screen.dart';
+import 'package:gaadi_live/features/routes/view/routes_screen.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../../app/responsive.dart';
@@ -161,7 +161,10 @@ class ScannerView extends StatelessWidget {
                                     onPressed: () {
                                       Navigator.of(context).pushReplacement(
                                         MaterialPageRoute<void>(
-                                          builder: (_) => const RoutesScreen(),
+                                          builder: (_) => RoutesScreen(
+                                            vehicleName: detectedValue ?? 'Vehicle Verified',
+                                            vehicleId: detectedValue ?? 'QR-Scan',
+                                          ),
                                         ),
                                       );
                                     },

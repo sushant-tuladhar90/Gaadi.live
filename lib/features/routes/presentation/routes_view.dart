@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../app/responsive.dart';
+import '../../../core/services/device_session_service.dart';
+import '../../../core/services/socket_service.dart';
+import '../controller/routes_controller.dart';
 import '../data/routes_content.dart';
+import '../model/route_search_model.dart';
+import 'emergency_stop_page.dart';
 import 'routes_components.dart';
 
 class RoutesView extends StatefulWidget {
@@ -15,17 +21,72 @@ class RoutesView extends StatefulWidget {
 }
 
 class _RoutesViewState extends State<RoutesView> {
+  final RoutesController controller = Get.put(RoutesController());
+  final TextEditingController searchController = TextEditingController();
+  late List<RouteProfile> routes;
   int? selectedRouteIndex;
 
   @override
   void initState() {
     super.initState();
-    selectedRouteIndex = widget.content.routes.indexWhere(
-      (route) => route.isSelected,
-    );
+    routes = List<RouteProfile>.from(widget.content.routes);
+    selectedRouteIndex = routes.indexWhere((route) => route.isSelected);
     if (selectedRouteIndex == -1) {
       selectedRouteIndex = null;
     }
+    if (routes.isNotEmpty) {
+      final defaultRouteId = routes[selectedRouteIndex ?? 0].id;
+      controller.selectedRouteId.value = defaultRouteId;
+    }
+
+    final vehicleName = widget.content.vehicleName ?? widget.content.vehicleId;
+    debugPrint(
+      'RoutesView: vehicleName=${widget.content.vehicleName ?? 'null'}, vehicleId=${widget.content.vehicleId}, displayName=$vehicleName',
+    );
+  }
+
+  void _selectRouteFromSearch(RouteSearchItem route) {
+    setState(() {
+      searchController.text = route.name;
+      controller.searchTerm.value = '';
+      controller.searchResults.clear();
+
+      final existingIndex = routes.indexWhere(
+        (item) => item.title.toLowerCase() == route.name.trim().toLowerCase(),
+      );
+
+      if (existingIndex != -1) {
+        selectedRouteIndex = existingIndex;
+        controller.selectedRouteId.value = routes[existingIndex].id;
+        return;
+      }
+
+      final newRoute = RouteProfile(
+        id: route.id,
+        title: route.name,
+        eta: '',
+        distance: '',
+        tolls: '',
+        lastLabel: '',
+        lastValue: '',
+        trafficLabel: route.cities.isNotEmpty ? route.cities.join(' • ') : 'New route',
+        trafficColor: const Color(0xFF61E9BA),
+        accentColor: const Color(0xFF61E9BA),
+        isSelected: true,
+        badgeLabel: route.cities.isNotEmpty ? route.cities.join(' • ') : null,
+        badgeColor: const Color(0xFF58E9F0),
+      );
+
+      routes.insert(0, newRoute);
+      selectedRouteIndex = 0;
+      controller.selectedRouteId.value = newRoute.id;
+    });
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -50,65 +111,110 @@ class _RoutesViewState extends State<RoutesView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _RoutesHeader(),
+                    _RoutesHeader(
+                      name:
+                          widget.content.vehicleName ?? widget.content.vehicleId,
+                    ),
                     SizedBox(height: Responsive.height(2)),
                     // _VehicleStatus(vehicleId: content.vehicleId),
                     SizedBox(height: Responsive.height(1.5)),
-                    _SearchBar(),
+                    _SearchBar(
+                      controller: searchController,
+                      onChanged: (value) {
+                        controller.searchRoutes(value);
+                      },
+                      onSuggestionSelected: (route) {
+                        searchController.text = route.name;
+                        controller.searchRoutes(route.name);
+                      },
+                    ),
+                    Obx(() {
+                      final showSuggestions = controller.searchTerm.value.trim().isNotEmpty &&
+                          controller.searchResults.isNotEmpty;
+
+                      if (!showSuggestions) {
+                        return const SizedBox.shrink();
+                      }
+
+                      return Column(
+                        children: [
+                          const SizedBox(height: 5),
+                          RouteSearchSuggestionList(
+                            items: controller.searchResults,
+                            onSelected: (route) {
+                              _selectRouteFromSearch(route);
+                            },
+                          ),
+                        ],
+                      );
+                    }),
                     SizedBox(height: Responsive.height(2)),
                     // const _TargetBayCard(),
                     SizedBox(height: Responsive.height(2.5)),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.alt_route,
-                          color: colorScheme.primary,
-                          size: 25,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Recommended Route',
-                          style: TextStyle(
-                            color: colorScheme.onSurface,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
+                    if (routes.isNotEmpty) ...[
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.alt_route,
+                            color: colorScheme.primary,
+                            size: 25,
                           ),
-                        ),
-                        // const Spacer(),
-                        // Text(
-                        //   '${content.routes.length} LIVE VARIANTS',
-                        //   style: const TextStyle(
-                        //     color: Color(0xFFB7C2CC),
-                        //     fontSize: 12,
-                        //     fontWeight: FontWeight.w800,
-                        //     letterSpacing: 0.8,
-                        //   ),
-                        // ),
-                      ],
-                    ),
-                    SizedBox(height: Responsive.height(1.5)),
-                    for (
-                      var index = 0;
-                      index < widget.content.routes.length;
-                      index++
-                    ) ...[
-                      RouteProfileCard(
-                        route: widget.content.routes[index],
-                        isSelected: selectedRouteIndex == index,
-                        onTap: () {
-                          setState(() {
-                            selectedRouteIndex = index;
-                          });
-                        },
+                          const SizedBox(width: 8),
+                          Text(
+                            'Routes',
+                            style: TextStyle(
+                              color: colorScheme.onSurface,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
                       ),
                       SizedBox(height: Responsive.height(1.5)),
+                      for (
+                        var index = 0;
+                        index < routes.length;
+                        index++
+                      ) ...[
+                        RouteProfileCard(
+                          route: routes[index],
+                          isSelected: selectedRouteIndex == index,
+                          onTap: () {
+                            setState(() {
+                              selectedRouteIndex = index;
+                              controller.selectedRouteId.value = routes[index].id;
+                            });
+                          },
+                        ),
+                        SizedBox(height: Responsive.height(1.5)),
+                      ],
                     ],
                     // const _TrafficSpectrum(),
                     SizedBox(height: Responsive.height(2)),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: () {},
+                        onPressed: () async {
+                          final selectedRouteId = controller.selectedRouteId.value.isNotEmpty
+                              ? controller.selectedRouteId.value
+                              : (routes.isNotEmpty ? routes.first.id : '');
+
+                          await DeviceSessionService.instance.captureSessionPayload(
+                            vehicleId: widget.content.vehicleId,
+                            routeId: selectedRouteId,
+                          );
+
+                          if (!context.mounted) return;
+
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => EmergencyStopPage(
+                                vehicleId: widget.content.vehicleId,
+                                vehicleName: widget.content.vehicleName,
+                              ),
+                            ),
+                          );
+                        },
                         icon: Icon(Icons.navigation_outlined, size: 28, color: colorScheme.onPrimary),
                         label: Text(
                           'Start Driving',
@@ -141,11 +247,14 @@ class _RoutesViewState extends State<RoutesView> {
 }
 
 class _RoutesHeader extends StatelessWidget {
-  const _RoutesHeader();
+  const _RoutesHeader({required this.name});
+
+  final String name;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    debugPrint('RoutesHeader: final display vehicle name = $name');
 
     return Row(
       children: [
@@ -163,19 +272,33 @@ class _RoutesHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 10),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Routes',
-              style: TextStyle(
-                color: colorScheme.onSurface,
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
+        Expanded(
+          child: Row(
+            children: [
+              Text(
+                'Routes',
+                style: TextStyle(
+                  color: colorScheme.onSurface,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
-            ),
-            // Row(children: [Icon(Icons.circle, color: Color(0xFF61E9BA), size: 10), SizedBox(width: 6), Text('GPS LIVE', style: TextStyle(color: Color(0xFFB7C2CC), fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 1))]),
-          ],
+              const SizedBox(width: 8),
+              
+              Flexible(
+                child: Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: colorScheme.primary,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
         const Spacer(),
         // Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9), decoration: BoxDecoration(color: const Color(0xFF202936), borderRadius: BorderRadius.circular(20)), child: const Row(children: [Icon(Icons.sensors, color: Color(0xFF61E9BA), size: 17), SizedBox(width: 6), Text('98%', style: TextStyle(color: Color(0xFFE8EDF5), fontWeight: FontWeight.w700))])),
@@ -220,7 +343,15 @@ class _RoutesHeader extends StatelessWidget {
 // }
 
 class _SearchBar extends StatelessWidget {
-  const _SearchBar();
+  const _SearchBar({
+    required this.controller,
+    required this.onChanged,
+    required this.onSuggestionSelected,
+  });
+
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final ValueChanged<RouteSearchItem> onSuggestionSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -237,13 +368,22 @@ class _SearchBar extends StatelessWidget {
           Icon(Icons.search, color: colorScheme.onSurfaceVariant, size: 27),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              'Search Location',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            child: TextField(
+              controller: controller,
+              onChanged: onChanged,
               style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
+                color: colorScheme.onSurface,
                 fontSize: 16,
+              ),
+              decoration: InputDecoration(
+                hintText: 'Search routes',
+                hintStyle: TextStyle(
+                  color: colorScheme.onSurfaceVariant,
+                  fontSize: 16,
+                ),
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
               ),
             ),
           ),

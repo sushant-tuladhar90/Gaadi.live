@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
+import '../controller/scanner_controller.dart';
 import 'scanner_view.dart';
 import '../data/scanner_content.dart';
-import '../../routes/presentation/routes_screen.dart';
 
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key});
@@ -15,6 +16,7 @@ class ScannerScreen extends StatefulWidget {
 class _ScannerScreenState extends State<ScannerScreen> {
   late final MobileScannerController _cameraController;
   late final ScannerContent _content;
+  final ScannerController _controller = Get.put(ScannerController());
   bool _isScanning = false;
   bool _isRearLens = true;
   bool _isTorchOn = false;
@@ -64,7 +66,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
     setState(() => _isScanning = true);
   }
 
-  void _handleDetection(BarcodeCapture capture) {
+  Future<void> _handleDetection(BarcodeCapture capture) async {
     final value = capture.barcodes
         .map((barcode) => barcode.rawValue)
         .whereType<String>()
@@ -78,9 +80,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
       _detectedValue = value;
       _isScanning = false;
     });
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(builder: (_) => const RoutesScreen()),
-    );
+
+    await _controller.validateQrToken(value);
   }
 
   void _toggleTorch() {

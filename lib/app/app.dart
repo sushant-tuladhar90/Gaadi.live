@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../features/home/presentation/home_screen.dart';
 import 'theme.dart';
@@ -8,7 +9,7 @@ class GaadiLiveApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       title: 'Gaadi Live',
       debugShowCheckedModeBanner: false,
       theme: GaadiLiveTheme.lightTheme,

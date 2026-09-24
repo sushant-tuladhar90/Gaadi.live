@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/responsive.dart';
 import '../data/routes_content.dart';
+import '../model/route_search_model.dart';
 
 class RouteProfileCard extends StatelessWidget {
   const RouteProfileCard({
@@ -117,6 +118,116 @@ class RouteProfileCard extends StatelessWidget {
 //     );
 //   }
 // }
+
+class RouteSearchSuggestionList extends StatelessWidget {
+  const RouteSearchSuggestionList({
+    required this.items,
+    required this.onSelected,
+    super.key,
+  });
+
+  final List<RouteSearchItem> items;
+  final ValueChanged<RouteSearchItem> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    if (items.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      margin: EdgeInsets.only(bottom: Responsive.height(1.5)),
+      padding: EdgeInsets.symmetric(
+        horizontal: Responsive.width(2.5),
+        vertical: Responsive.height(1),
+      ),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(Responsive.radius(16)),
+        border: Border.all(
+          color: colorScheme.outlineVariant,
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: Responsive.width(2),
+              vertical: Responsive.height(0.8),
+            ),
+            child: Text(
+              'Search results',
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: Responsive.font(12),
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.8,
+              ),
+            ),
+          ),
+          ...items.map(
+            (item) => InkWell(
+              onTap: () => onSelected(item),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(
+                  horizontal: Responsive.width(2),
+                  vertical: Responsive.height(1.3),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.route_rounded,
+                      size: 18,
+                      color: colorScheme.primary,
+                    ),
+                    SizedBox(width: Responsive.width(2.5)),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: colorScheme.onSurface,
+                              fontSize: Responsive.font(16),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          if (item.cities.isNotEmpty)
+                            Text(
+                              item.cities.join(' • '),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: colorScheme.onSurfaceVariant,
+                                fontSize: Responsive.font(12),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _Tag extends StatelessWidget {
   const _Tag({required this.label, required this.color});

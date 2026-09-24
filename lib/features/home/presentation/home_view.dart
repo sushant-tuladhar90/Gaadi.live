@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/responsive.dart';
 import '../data/home_content.dart';
-import '../../scanner/presentation/scanner_screen.dart';
+import '../../scanner/view/scanner_screen.dart';
 
 class HomeView extends StatelessWidget {
   const HomeView({

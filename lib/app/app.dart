@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../features/home/presentation/home_screen.dart';
+import 'routes.dart';
 import 'theme.dart';
 
 class GaadiLiveApp extends StatelessWidget {
@@ -15,7 +15,9 @@ class GaadiLiveApp extends StatelessWidget {
       theme: GaadiLiveTheme.lightTheme,
       darkTheme: GaadiLiveTheme.darkTheme,
       themeMode: ThemeMode.system,
-      home: const HomeScreen(),
+      initialRoute: AppRoutes.home,
+      getPages: AppPages.pages,
+      defaultTransition: Transition.fadeIn,
     );
   }
 }

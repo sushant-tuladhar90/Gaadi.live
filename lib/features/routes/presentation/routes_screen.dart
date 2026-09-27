@@ -21,13 +21,13 @@ class RoutesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final routes = (operationalRoutes != null && operationalRoutes!.isNotEmpty)
         ? RoutesContent.fromOperationalRoutes(
-            vehicleId: vehicleId ?? defaultRoutesContent.vehicleId,
-            vehicleName: vehicleName ?? defaultRoutesContent.vehicleName,
+            vehicleId: vehicleId ?? '',
+            vehicleName: vehicleName,
             operationalRoutes: operationalRoutes!,
           )
         : RoutesContent(
-            vehicleId: vehicleId ?? defaultRoutesContent.vehicleId,
-            vehicleName: vehicleName ?? defaultRoutesContent.vehicleName,
+            vehicleId: vehicleId ?? '',
+            vehicleName: vehicleName,
             routes: const [],
           );
 

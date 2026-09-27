@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:gaadi_live/features/routes/view/routes_screen.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../../app/responsive.dart';
+import '../../../core/components/floating_loading_button.dart';
 import '../data/scanner_content.dart';
 
 class ScannerView extends StatelessWidget {
@@ -11,6 +11,7 @@ class ScannerView extends StatelessWidget {
     required this.isScanning,
     required this.isRearLens,
     required this.isTorchOn,
+    required this.isLoading,
     required this.detectedValue,
     required this.cameraController,
     required this.onScan,
@@ -25,6 +26,7 @@ class ScannerView extends StatelessWidget {
   final bool isScanning;
   final bool isRearLens;
   final bool isTorchOn;
+  final bool isLoading;
   final String? detectedValue;
   final MobileScannerController cameraController;
   final VoidCallback onScan;
@@ -155,38 +157,25 @@ class ScannerView extends StatelessWidget {
                             ),
                             child: Column(
                               children: [
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton.icon(
-                                    onPressed: () {
-                                      Navigator.of(context).pushReplacement(
-                                        MaterialPageRoute<void>(
-                                          builder: (_) => RoutesScreen(
-                                            vehicleName: detectedValue ?? 'Vehicle Verified',
-                                            vehicleId: detectedValue ?? 'QR-Scan',
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    icon: const Icon(Icons.qr_code_scanner_rounded, size: 30),
-                                    label: Text(
-                                      detectedValue == null
-                                        ? (isScanning ? 'Scanning QR Code...' : 'Scan QR Code')
-                                        : detectedValue!,
-                                      style: TextStyle(
-                                        fontSize: Responsive.font(22),
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: accent,
-                                      foregroundColor: colorScheme.onPrimary,
-                                      minimumSize: Size.fromHeight(Responsive.height(9)),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(Responsive.radius(16)),
-                                      ),
-                                    ),
-                                  ),
+                                FloatingLoadingButton(
+                                  onPressed: () {
+                                    if (detectedValue == null) {
+                                      onScan();
+                                      return;
+                                    }
+
+                                    onRecenter();
+                                  },
+                                  isLoading: isLoading,
+                                  icon: Icons.qr_code_scanner_rounded,
+                                  label: detectedValue == null
+                                      ? (isScanning ? 'Scanning QR Code...' : 'Scan QR Code')
+                                      : 'Scan Again',
+                                  loadingLabel: 'Validating QR...',
+                                  backgroundColor: accent,
+                                  foregroundColor: colorScheme.onPrimary,
+                                  minHeight: Responsive.height(9),
+                                  borderRadius: Responsive.radius(16),
                                 ),
                                 SizedBox(height: Responsive.height(2)),
                                 SizedBox(height: Responsive.height(2)),

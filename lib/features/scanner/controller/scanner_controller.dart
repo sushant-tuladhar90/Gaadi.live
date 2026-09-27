@@ -1,9 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
+import '../../../app/routes.dart';
 import '../../../core/services/vehicle_qr_service.dart';
-import '../../routes/view/routes_screen.dart';
-import '../presentation/invalid_vehicle_screen.dart';
 
 class ScannerController extends GetxController {
   final VehicleQrService _vehicleQrService = VehicleQrService();
@@ -19,7 +18,7 @@ class ScannerController extends GetxController {
     debugPrint('ScannerController: normalized token = $token');
 
     if (token.isEmpty) {
-      debugPrint('ScannerController: token is empty, redirecting to invalid screen');
+      debugPrint('ScannerController: token is empty; invalid QR, staying on scanner');
       _goToInvalidVehicleScreen();
       return;
     }
@@ -31,28 +30,34 @@ class ScannerController extends GetxController {
     try {
       final qrInfo = await _vehicleQrService.fetchVehicleQrInfo(token);
       debugPrint(
-        'ScannerController: API result -> success=${qrInfo.success}, canDrive=${qrInfo.data.canDrive}, vehicleName=${qrInfo.data.name}',
+        'ScannerController: API result -> success=${qrInfo.success}, canDrive=${qrInfo.data.canDrive}, vehicleName=${qrInfo.data.name}, vehicleId=${qrInfo.data.id}',
       );
 
-      if (qrInfo.success && qrInfo.data.canDrive) {
-        final vehicleId = qrInfo.data.id.isNotEmpty ? qrInfo.data.id : qrInfo.data.numberPlate;
+      final isValidVehicle = qrInfo.success &&
+          qrInfo.data.canDrive &&
+          qrInfo.data.id.trim().isNotEmpty &&
+          qrInfo.data.name.trim().isNotEmpty;
 
-        debugPrint('ScannerController: valid QR, navigating to RoutesScreen');
-        debugPrint(
-          'ScannerController: vehicleId=$vehicleId, vehicleName=${qrInfo.data.name}, operationalRoutes=${qrInfo.data.operationalRoutes.length}',
-        );
-        Get.offAll(
-          () => RoutesScreen(
-            vehicleName: qrInfo.data.name,
-            vehicleId: vehicleId,
-            operationalRoutes: qrInfo.data.operationalRoutes,
-          ),
-        );
+      if (!isValidVehicle) {
+        debugPrint('ScannerController: QR rejected by backend or missing required vehicle data; redirecting to invalid screen');
+        _goToInvalidVehicleScreen();
         return;
       }
 
-      debugPrint('ScannerController: QR rejected by backend, redirecting to invalid screen');
-      _goToInvalidVehicleScreen();
+      final vehicleId = qrInfo.data.id.trim();
+
+      debugPrint('ScannerController: valid QR, navigating to RoutesScreen');
+      debugPrint(
+        'ScannerController: vehicleId=$vehicleId, vehicleName=${qrInfo.data.name}, operationalRoutes=${qrInfo.data.operationalRoutes.length}',
+      );
+      Get.offAllNamed(
+        AppRoutes.routes,
+        arguments: {
+          'vehicleName': qrInfo.data.name,
+          'vehicleId': vehicleId,
+          'operationalRoutes': qrInfo.data.operationalRoutes,
+        },
+      );
     } catch (e) {
       debugPrint('ScannerController: validation exception = $e');
       _goToInvalidVehicleScreen();
@@ -62,6 +67,6 @@ class ScannerController extends GetxController {
   }
 
   void _goToInvalidVehicleScreen() {
-    Get.offAll(() => const InvalidVehicleScreen());
+    Get.offAllNamed(AppRoutes.invalidVehicle);
   }
 }

@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:uuid/uuid.dart';
+// import 'package:uuid/uuid.dart';
 
 class DeviceSessionService {
   DeviceSessionService._();
@@ -16,17 +16,41 @@ class DeviceSessionService {
   Future<String> getOrCreateDeviceId() async {
     final prefs = await SharedPreferences.getInstance();
 
+    // String makeDeviceId() => 'gaadi-live-da-${const Uuid().v4()}';
+
+    // if (kDebugMode) {
+    //   final debugDeviceId = makeDeviceId();
+    //   await prefs.setString(_deviceIdKey, debugDeviceId);
+    //   debugPrint('DeviceSessionService: using debug device_id = $debugDeviceId');
+    //   return debugDeviceId;
+    // }
+
+    // var deviceId = prefs.getString(_deviceIdKey);
+    // if (deviceId == null || deviceId.trim().isEmpty) {
+    //   deviceId = makeDeviceId();
+    //   await prefs.setString(_deviceIdKey, deviceId);
+    // }
+    
+
+
     if (kDebugMode) {
-      await prefs.setString(_deviceIdKey, 'test_sushant');
-      debugPrint('DeviceSessionService: using debug device_id = test_sushant');
-      return 'test_sushant';
+      const debugDeviceId = 'test_sushant';
+      await prefs.setString(_deviceIdKey, debugDeviceId);
+      debugPrint('DeviceSessionService: using debug device_id = $debugDeviceId');
+      return debugDeviceId;
     }
 
     var deviceId = prefs.getString(_deviceIdKey);
     if (deviceId == null || deviceId.trim().isEmpty) {
-      deviceId = const Uuid().v4();
+      deviceId = 'test_sushant';
       await prefs.setString(_deviceIdKey, deviceId);
     }
+
+
+
+
+
+
 
     debugPrint('DeviceSessionService: stored device_id = $deviceId');
     return deviceId;

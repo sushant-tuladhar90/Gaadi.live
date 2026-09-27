@@ -20,6 +20,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
   bool _isScanning = false;
   bool _isRearLens = true;
   bool _isTorchOn = false;
+  bool _isValidating = false;
   String? _detectedValue;
 
   @override
@@ -53,6 +54,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
       isRearLens: _isRearLens,
       isTorchOn: _isTorchOn,
       detectedValue: _detectedValue,
+      isLoading: _isValidating,
       cameraController: _cameraController,
       onScan: _startScanning,
       onDetection: _handleDetection,
@@ -72,16 +74,22 @@ class _ScannerScreenState extends State<ScannerScreen> {
         .whereType<String>()
         .firstOrNull;
 
-    if (value == null || value == _detectedValue) {
+    if (value == null || value == _detectedValue || _isValidating) {
       return;
     }
 
     setState(() {
       _detectedValue = value;
       _isScanning = false;
+      _isValidating = true;
     });
 
     await _controller.validateQrToken(value);
+
+    if (!mounted) return;
+    setState(() {
+      _isValidating = false;
+    });
   }
 
   void _toggleTorch() {

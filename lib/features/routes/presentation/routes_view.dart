@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../app/responsive.dart';
+import '../../../app/routes.dart';
+import '../../../core/components/floating_loading_button.dart';
 import '../../../core/services/device_session_service.dart';
 import '../../../core/services/socket_service.dart';
 import '../controller/routes_controller.dart';
 import '../data/routes_content.dart';
 import '../model/route_search_model.dart';
-import 'emergency_stop_page.dart';
 import 'routes_components.dart';
 
 class RoutesView extends StatefulWidget {
@@ -25,6 +26,7 @@ class _RoutesViewState extends State<RoutesView> {
   final TextEditingController searchController = TextEditingController();
   late List<RouteProfile> routes;
   int? selectedRouteIndex;
+  bool _isStartingTrip = false;
 
   @override
   void initState() {
@@ -191,48 +193,57 @@ class _RoutesViewState extends State<RoutesView> {
                     ],
                     // const _TrafficSpectrum(),
                     SizedBox(height: Responsive.height(2)),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () async {
+                    FloatingLoadingButton(
+                      onPressed: () async {
+                        if (_isStartingTrip) {
+                          return;
+                        }
+
+                        setState(() => _isStartingTrip = true);
+
+                        try {
                           final selectedRouteId = controller.selectedRouteId.value.isNotEmpty
                               ? controller.selectedRouteId.value
                               : (routes.isNotEmpty ? routes.first.id : '');
 
-                          await DeviceSessionService.instance.captureSessionPayload(
+                          final payload = await DeviceSessionService.instance.captureSessionPayload(
                             vehicleId: widget.content.vehicleId,
                             routeId: selectedRouteId,
                           );
 
+                          SocketService.instance.emitDriverLocation(
+                            deviceId: payload['device_id'] as String,
+                            vehicleId: payload['vehicle_id'] as String,
+                            routeId: payload['route_id'] as String,
+                            location: (payload['location'] as List)
+                                .map((item) => (item as num).toDouble())
+                                .toList(),
+                          );
+
                           if (!context.mounted) return;
 
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => EmergencyStopPage(
-                                vehicleId: widget.content.vehicleId,
-                                vehicleName: widget.content.vehicleName,
-                              ),
-                            ),
+                          await Get.toNamed(
+                            AppRoutes.emergencyStop,
+                            arguments: {
+                              'vehicleId': widget.content.vehicleId,
+                              'vehicleName': widget.content.vehicleName,
+                              'routeId': selectedRouteId,
+                            },
                           );
-                        },
-                        icon: Icon(Icons.navigation_outlined, size: 28, color: colorScheme.onPrimary),
-                        label: Text(
-                          'Start Driving',
-                          style: TextStyle(
-                            fontSize: 21,
-                            fontWeight: FontWeight.w700,
-                            color: colorScheme.onPrimary,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colorScheme.primary,
-                          foregroundColor: colorScheme.onPrimary,
-                          minimumSize: Size.fromHeight(Responsive.height(9)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                        ),
-                      ),
+                        } finally {
+                          if (mounted) {
+                            setState(() => _isStartingTrip = false);
+                          }
+                        }
+                      },
+                      isLoading: _isStartingTrip,
+                      icon: Icons.navigation_outlined,
+                      label: 'Start Driving',
+                      loadingLabel: 'Starting Trip...',
+                      backgroundColor: colorScheme.primary,
+                      foregroundColor: colorScheme.onPrimary,
+                      minHeight: Responsive.height(9),
+                      borderRadius: 18,
                     ),
                   ],
                 ),

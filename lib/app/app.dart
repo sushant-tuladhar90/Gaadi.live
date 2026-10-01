@@ -15,7 +15,7 @@ class GaadiLiveApp extends StatelessWidget {
       theme: GaadiLiveTheme.lightTheme,
       darkTheme: GaadiLiveTheme.darkTheme,
       themeMode: ThemeMode.system,
-      initialRoute: AppRoutes.home,
+      initialRoute: AppRoutes.deviceCheck,
       getPages: AppPages.pages,
       defaultTransition: Transition.fadeIn,
     );

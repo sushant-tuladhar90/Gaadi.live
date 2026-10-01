@@ -1,5 +1,8 @@
 import 'package:get/get.dart';
 
+import '../features/device_check/model/device_validity_model.dart';
+import '../features/device_check/presentation/device_check_screen.dart';
+import '../features/device_check/presentation/register_device_screen.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/routes/presentation/emergency_stop_page.dart';
 import '../features/routes/presentation/routes_screen.dart';
@@ -10,6 +13,8 @@ import '../features/scanner/presentation/scanner_screen.dart';
 class AppRoutes {
   AppRoutes._();
 
+  static const String deviceCheck = '/device-check';
+  static const String registerDevice = '/register-device';
   static const String home = '/home';
   static const String scanner = '/scanner';
   static const String invalidVehicle = '/invalid-vehicle';
@@ -21,6 +26,14 @@ class AppPages {
   AppPages._();
 
   static final List<GetPage> pages = [
+    GetPage(
+      name: AppRoutes.deviceCheck,
+      page: () => const DeviceCheckScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.registerDevice,
+      page: () => RegisterDeviceScreen(appInfo: Get.arguments as DriverAppInfo),
+    ),
     GetPage(
       name: AppRoutes.home,
       page: () => const HomeScreen(),

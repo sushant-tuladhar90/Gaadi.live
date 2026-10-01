@@ -1,12 +1,9 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../app/responsive.dart';
-import '../../../core/services/device_session_service.dart';
-import '../../../core/services/socket_service.dart';
+import '../../../core/services/background_location_service.dart';
 import '../../scanner/controller/scanner_controller.dart';
 import '../../scanner/presentation/scanner_screen.dart';
 
@@ -27,56 +24,25 @@ class EmergencyStopPage extends StatefulWidget {
 }
 
 class _EmergencyStopPageState extends State<EmergencyStopPage> {
-  Timer? _liveTimer;
-
   @override
   void initState() {
     super.initState();
-    _startLiveHeartbeat();
-  }
-
-  @override
-  void dispose() {
-    _liveTimer?.cancel();
-    super.dispose();
-  }
-
-  Future<void> _sendDriverHeartbeat() async {
     final vehicleId = (widget.vehicleId ?? '').trim();
     final routeId = widget.routeId.trim();
 
     if (vehicleId.isEmpty || routeId.isEmpty) {
-      debugPrint('EmergencyStopPage: cannot send heartbeat because vehicleId or routeId is empty');
+      debugPrint('EmergencyStopPage: cannot start tracking because vehicleId or routeId is empty');
       return;
     }
 
-    await SocketService.instance.connect();
-
-    final payload = await DeviceSessionService.instance.captureSessionPayload(
-      vehicleId: vehicleId,
-      routeId: routeId,
-    );
-
-    SocketService.instance.emitDriverLocation(
-      deviceId: payload['device_id'] as String,
-      vehicleId: payload['vehicle_id'] as String,
-      routeId: payload['route_id'] as String,
-      location: (payload['location'] as List)
-          .map((item) => (item as num).toDouble())
-          .toList(),
-    );
-  }
-
-  void _startLiveHeartbeat() {
-    unawaited(_sendDriverHeartbeat());
-    _liveTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
-      await _sendDriverHeartbeat();
-    });
+    // Location heartbeats are already running via the foreground service
+    // started from the routes screen; this just confirms/refreshes the
+    // active vehicle+route in case they changed.
+    BackgroundLocationService.start(vehicleId: vehicleId, routeId: routeId);
   }
 
   Future<void> _handleStop() async {
-    _liveTimer?.cancel();
-    SocketService.instance.disconnect();
+    await BackgroundLocationService.stop();
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();

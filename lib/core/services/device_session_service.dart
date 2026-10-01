@@ -1,10 +1,9 @@
 import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// import 'package:uuid/uuid.dart';
+import 'package:uuid/uuid.dart';
 
 class DeviceSessionService {
   DeviceSessionService._();
@@ -16,25 +15,10 @@ class DeviceSessionService {
   Future<String> getOrCreateDeviceId() async {
     final prefs = await SharedPreferences.getInstance();
 
-    // String makeDeviceId() => 'gaadi-live-da-${const Uuid().v4()}';
-
-    // if (kDebugMode) {
-    //   final debugDeviceId = makeDeviceId();
-    //   await prefs.setString(_deviceIdKey, debugDeviceId);
-    //   debugPrint('DeviceSessionService: using debug device_id = $debugDeviceId');
-    //   return debugDeviceId;
-    // }
-
-    // var deviceId = prefs.getString(_deviceIdKey);
-    // if (deviceId == null || deviceId.trim().isEmpty) {
-    //   deviceId = makeDeviceId();
-    //   await prefs.setString(_deviceIdKey, deviceId);
-    // }
-    
-
+    String makeDeviceId() => 'gaadi-live-da-${const Uuid().v4()}';
 
     if (kDebugMode) {
-      const debugDeviceId = 'test_sushant';
+      final debugDeviceId = makeDeviceId();
       await prefs.setString(_deviceIdKey, debugDeviceId);
       debugPrint('DeviceSessionService: using debug device_id = $debugDeviceId');
       return debugDeviceId;
@@ -42,9 +26,24 @@ class DeviceSessionService {
 
     var deviceId = prefs.getString(_deviceIdKey);
     if (deviceId == null || deviceId.trim().isEmpty) {
-      deviceId = 'test_sushant';
+      deviceId = makeDeviceId();
       await prefs.setString(_deviceIdKey, deviceId);
     }
+    
+
+
+    // if (kDebugMode) {
+    //   const debugDeviceId = 'test_sushant';
+    //   await prefs.setString(_deviceIdKey, debugDeviceId);
+    //   debugPrint('DeviceSessionService: using debug device_id = $debugDeviceId');
+    //   return debugDeviceId;
+    // }
+
+    // var deviceId = prefs.getString(_deviceIdKey);
+    // if (deviceId == null || deviceId.trim().isEmpty) {
+    //   deviceId = 'test_sushant';
+    //   await prefs.setString(_deviceIdKey, deviceId);
+    // }
 
 
 

@@ -4,8 +4,7 @@ import 'package:get/get.dart';
 import '../../../app/responsive.dart';
 import '../../../app/routes.dart';
 import '../../../core/components/floating_loading_button.dart';
-import '../../../core/services/device_session_service.dart';
-import '../../../core/services/socket_service.dart';
+import '../../../core/services/background_location_service.dart';
 import '../controller/routes_controller.dart';
 import '../data/routes_content.dart';
 import '../model/route_search_model.dart';
@@ -206,18 +205,9 @@ class _RoutesViewState extends State<RoutesView> {
                               ? controller.selectedRouteId.value
                               : (routes.isNotEmpty ? routes.first.id : '');
 
-                          final payload = await DeviceSessionService.instance.captureSessionPayload(
+                          await BackgroundLocationService.start(
                             vehicleId: widget.content.vehicleId,
                             routeId: selectedRouteId,
-                          );
-
-                          SocketService.instance.emitDriverLocation(
-                            deviceId: payload['device_id'] as String,
-                            vehicleId: payload['vehicle_id'] as String,
-                            routeId: payload['route_id'] as String,
-                            location: (payload['location'] as List)
-                                .map((item) => (item as num).toDouble())
-                                .toList(),
                           );
 
                           if (!context.mounted) return;
